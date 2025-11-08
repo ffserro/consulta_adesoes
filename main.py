@@ -16,42 +16,43 @@ def plota_link(ata):
 
 def acha_servico():
     st.session_state['atas'] = []
-    codigoServico = st.session_state['servicos'][st.session_state['nomeServico']]
-    
-    i = 1
-    while True:
-        try:
-            response = requests.get(f'https://dadosabertos.compras.gov.br/modulo-arp/2_consultarARPItem?pagina={i}&tamanhoPagina=500&dataVigenciaInicialMin={(dt.today() - td(days=360)).strftime("%Y-%m-%d")}&dataVigenciaInicialMax={(dt.today()).strftime("%Y-%m-%d")}&codigoItem={codigoServico}').json()
-            st.session_state['atas'] += response['resultado']
-        except KeyError:
-            print(response.json())
-            sleep(1)
-            continue
+    if st.session_state.nomeServico != '':
+        codigoServico = st.session_state['servicos'][st.session_state['nomeServico']]
         
-        if response['paginasRestantes'] == 0:
-            break
-        i += 1
-        sleep(0.1)
+        i = 1
+        while True:
+            try:
+                response = requests.get(f'https://dadosabertos.compras.gov.br/modulo-arp/2_consultarARPItem?pagina={i}&tamanhoPagina=500&dataVigenciaInicialMin={(dt.today() - td(days=360)).strftime("%Y-%m-%d")}&dataVigenciaInicialMax={(dt.today()).strftime("%Y-%m-%d")}&codigoItem={codigoServico}').json()
+                st.session_state['atas'] += response['resultado']
+            except KeyError:
+                print(response.json())
+                sleep(1)
+                continue
+            
+            if response['paginasRestantes'] == 0:
+                break
+            i += 1
+            sleep(0.1)
 
 def acha_material():
     st.session_state['atas'] = []
-    
-    codigoPdm = st.session_state['materiais'][st.session_state['nomePdm']]
-        
-    i = 1
-    while True:
-        try:
-            response = requests.get(f'https://dadosabertos.compras.gov.br/modulo-arp/2_consultarARPItem?pagina=1&tamanhoPagina=500&dataVigenciaInicialMin={(dt.today() - td(days=360)).strftime("%Y-%m-%d")}&dataVigenciaInicialMax={(dt.today()).strftime("%Y-%m-%d")}&codigoPdm={codigoPdm}').json()
-            st.session_state['atas'] += response['resultado']
-        except KeyError:
-            print(response.json())
-            sleep(1)
-            continue
-        
-        if response['paginasRestantes'] == 0:
-            break
-        i += 1
-        sleep(0.1)
+    if st.session_state.nomePdm != '':
+        codigoPdm = st.session_state['materiais'][st.session_state['nomePdm']]
+            
+        i = 1
+        while True:
+            try:
+                response = requests.get(f'https://dadosabertos.compras.gov.br/modulo-arp/2_consultarARPItem?pagina=1&tamanhoPagina=500&dataVigenciaInicialMin={(dt.today() - td(days=360)).strftime("%Y-%m-%d")}&dataVigenciaInicialMax={(dt.today()).strftime("%Y-%m-%d")}&codigoPdm={codigoPdm}').json()
+                st.session_state['atas'] += response['resultado']
+            except KeyError:
+                print(response.json())
+                sleep(1)
+                continue
+            
+            if response['paginasRestantes'] == 0:
+                break
+            i += 1
+            sleep(0.1)
 
 if 'initialized' not in st.session_state:
     st.cache_data.clear()
@@ -66,13 +67,16 @@ if 'initialized' not in st.session_state:
             st.rerun()
         
         else:
-            st.write('Parece que você não respondeu as perguntas de segurança corretamente.')
+            st.write('Parece que você não respondeu a pergunta de segurança corretamente.')
             st.write('Sinto muito, mas esta aplicação não é para você...')
             st.stop()
 
 
 
 if 'initialized' in st.session_state:
+    
+    st.title('Buscador de adesões')
+    
     tipo = st.selectbox(
         'Está buscando material ou serviço, meu consagrado?',
         ['Material', 'Serviço'],
