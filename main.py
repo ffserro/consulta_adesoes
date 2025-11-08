@@ -117,7 +117,7 @@ if 'initialized' in st.session_state:
         )
 
     if 'atas' in st.session_state:
-        atas_info = set([(i['numeroAtaRegistroPreco'], i['nomeUnidadeGerenciadora'], i['nomeRazaoSocialFornecedor'], i['numeroControlePncpAta']) for i in st.session_state.atas if i['maximoAdesao'] > 0])
+        atas_info = set([(i['numeroAtaRegistroPreco'], i['nomeUnidadeGerenciadora'], i['nomeRazaoSocialFornecedor'], i['numeroControlePncpAta']) for i in st.session_state.atas if int(i['maximoAdesao']) > 0])
         
         if len(atas_info) == 0:
             st.write('Sinto muito, nenhuma ata foi encontrada...')
