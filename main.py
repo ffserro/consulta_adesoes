@@ -80,7 +80,8 @@ if 'initialized' in st.session_state:
     tipo = st.selectbox(
         'Está buscando material ou serviço, meu consagrado?',
         ['Material', 'Serviço'],
-        index=None
+        index=None,
+        placeholder='Material ou Serviço?'
     )
 
     if tipo=='Material':
