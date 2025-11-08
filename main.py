@@ -4,7 +4,6 @@ import requests
 import streamlit as st
 
 from time import sleep
-from unidecode import unidecode
 from datetime import datetime as dt, timedelta as td
     
 def plota_link(ata):
@@ -59,11 +58,10 @@ if 'initialized' not in st.session_state:
     st.cache_resource.clear()
     
     vrf1 = st.text_input(st.secrets.pergunta_secreta.pergunta1)
-    vrf2 = st.text_input(st.secrets.pergunta_secreta.pergunta2)
     
-    if vrf1 and vrf2:
+    if vrf1:
         
-        if (vrf1.lower() == st.secrets.pergunta_secreta.vrf1) and (vrf2.lower() == st.secrets.pergunta_secreta.vrf2):
+        if (vrf1.lower() in st.secrets.pergunta_secreta.vrf1):
             st.session_state['initialized'] = True
             st.rerun()
         
