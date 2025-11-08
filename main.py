@@ -44,7 +44,7 @@ def acha_material():
         i = 1
         while True:
             try:
-                response = requests.get(f'https://dadosabertos.compras.gov.br/modulo-arp/2_consultarARPItem?pagina=1&tamanhoPagina=500&dataVigenciaInicialMin={(dt.today() - td(days=360)).strftime("%Y-%m-%d")}&dataVigenciaInicialMax={(dt.today()).strftime("%Y-%m-%d")}&codigoPdm={codigoPdm}').json()
+                response = requests.get(f'https://dadosabertos.compras.gov.br/modulo-arp/2_consultarARPItem?pagina={i}&tamanhoPagina=500&dataVigenciaInicialMin={(dt.today() - td(days=360)).strftime("%Y-%m-%d")}&dataVigenciaInicialMax={(dt.today()).strftime("%Y-%m-%d")}&codigoPdm={codigoPdm}').json()
                 st.session_state['atas'] += response['resultado']
             except KeyError:
                 print(response.json())
