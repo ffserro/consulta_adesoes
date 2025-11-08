@@ -16,7 +16,7 @@ def plota_link(ata):
 
 def acha_servico():
     st.session_state['atas'] = []
-    if 'nomeServico' in st.session_state:
+    try:
         codigoServico = st.session_state['servicos'][st.session_state['nomeServico']]
         
         i = 1
@@ -33,10 +33,12 @@ def acha_servico():
                 break
             i += 1
             sleep(0.1)
+    except KeyError:
+        pass
 
 def acha_material():
     st.session_state['atas'] = []
-    if 'nomePdm' in st.session_state:
+    try:
         codigoPdm = st.session_state['materiais'][st.session_state['nomePdm']]
             
         i = 1
@@ -53,6 +55,8 @@ def acha_material():
                 break
             i += 1
             sleep(0.1)
+    except KeyError:
+        pass
 
 if 'initialized' not in st.session_state:
     st.cache_data.clear()
