@@ -66,7 +66,7 @@ if 'initialized' not in st.session_state:
     
     if vrf1:
         
-        if (vrf1.lower() in st.secrets.pergunta_secreta.vrf1):
+        if (vrf1.lower().strip() in st.secrets.pergunta_secreta.vrf1):
             st.session_state['initialized'] = True
             st.rerun()
         
