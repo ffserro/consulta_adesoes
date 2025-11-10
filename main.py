@@ -29,6 +29,8 @@ def acha_servico():
                 print(response.json())
                 sleep(1)
                 continue
+            except:
+                st.write('Parece que o Compras.gov está fora do ar. Por favor tente novamente mais tarde.')
             
             ### Porque eu imagino que ninguém precisa de mais do que 500 atas...
             # if response['paginasRestantes'] == 0:
@@ -55,7 +57,7 @@ def acha_material():
                 sleep(1)
                 continue
             except:
-                st.write(response.text)
+                st.write('Parece que o Compras.gov está fora do ar. Por favor tente novamente mais tarde.')
             
             # if response['paginasRestantes'] == 0:
             #     break
