@@ -54,6 +54,8 @@ def acha_material():
                 print(response.json())
                 sleep(1)
                 continue
+            except requests.exceptions.JSONDecodeError:
+                st.write(response.text)
             
             # if response['paginasRestantes'] == 0:
             #     break
