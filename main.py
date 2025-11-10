@@ -71,18 +71,22 @@ if 'initialized' not in st.session_state:
     st.cache_data.clear()
     st.cache_resource.clear()
     
-    vrf1 = st.text_input(st.secrets.pergunta_secreta.pergunta1)
+    # vrf1 = st.text_input(st.secrets.pergunta_secreta.pergunta1)
     
-    if vrf1:
+    # if vrf1:
         
-        if (vrf1.lower().strip() in st.secrets.pergunta_secreta.vrf1):
-            st.session_state['initialized'] = True
-            st.rerun()
+    #     if (vrf1.lower().strip() in st.secrets.pergunta_secreta.vrf1):
+    #         st.session_state['initialized'] = True
+    #         st.rerun()
         
-        else:
-            st.write('Parece que você não respondeu a pergunta de segurança corretamente.')
-            st.write('Sinto muito, mas esta aplicação não é para você...')
-            st.stop()
+    #     else:
+    #         st.write('Parece que você não respondeu a pergunta de segurança corretamente.')
+    #         st.write('Sinto muito, mas esta aplicação não é para você...')
+    #         st.stop()
+
+    if st.button('Começar'):
+        st.session_state['initialized'] = True
+        st.rerun()
 
 
 
