@@ -59,10 +59,6 @@ def acha_material():
             except:
                 st.write('Parece que o Compras.gov está fora do ar. Por favor tente novamente mais tarde.')
             
-            # if response['paginasRestantes'] == 0:
-            #     break
-            # i += 1
-            # sleep(0.1)
 
     except KeyError:
         pass
@@ -70,21 +66,8 @@ def acha_material():
 if 'initialized' not in st.session_state:
     st.cache_data.clear()
     st.cache_resource.clear()
-    
-    # vrf1 = st.text_input(st.secrets.pergunta_secreta.pergunta1)
-    
-    # if vrf1:
-        
-    #     if (vrf1.lower().strip() in st.secrets.pergunta_secreta.vrf1):
-    #         st.session_state['initialized'] = True
-    #         st.rerun()
-        
-    #     else:
-    #         st.write('Parece que você não respondeu a pergunta de segurança corretamente.')
-    #         st.write('Sinto muito, mas esta aplicação não é para você...')
-    #         st.stop()
 
-    if st.button('Começar'):
+    if st.button('Quero encontrar uma adesão'):
         st.session_state['initialized'] = True
         st.rerun()
 
