@@ -22,7 +22,7 @@ def acha_servico():
         i = 1
         while True:
             try:
-                response = requests.get(f'https://dadosabertos.compras.gov.br/modulo-arp/2_consultarARPItem?pagina={i}&tamanhoPagina=500&dataVigenciaInicialMin={(dt.today() - td(days=360)).strftime("%Y-%m-%d")}&dataVigenciaInicialMax={(dt.today()).strftime("%Y-%m-%d")}&codigoItem={codigoServico}').json()
+                response = requests.get(f'https://dadosabertos.compras.gov.br/modulo-arp/2_consultarARPItem?pagina={i}&tamanhoPagina=10&dataVigenciaInicialMin={(dt.today() - td(days=360)).strftime("%Y-%m-%d")}&dataVigenciaInicialMax={(dt.today()).strftime("%Y-%m-%d")}&codigoItem={codigoServico}').json()
                 st.session_state['atas'] += response['resultado']
                 break
             except KeyError:
@@ -32,11 +32,10 @@ def acha_servico():
             except:
                 st.write('Parece que o Compras.gov está fora do ar. Por favor tente novamente mais tarde.')
             
-            ### Porque eu imagino que ninguém precisa de mais do que 500 atas...
-            # if response['paginasRestantes'] == 0:
-            #     break
-            # i += 1
-            # sleep(0.1)
+            if response['paginasRestantes'] == 0:
+                break
+            i += 1
+            sleep(0.1)
             
     except KeyError:
         pass
