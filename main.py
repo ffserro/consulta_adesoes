@@ -149,7 +149,7 @@ async def search_async(
     max_concurrency: int = MAX_CONCURRENCY,
 ) -> List[Dict]:
     """Executa a busca de forma assíncrona, exibindo resultados conforme chegam."""
-    timeout = aiohttp.ClientTimeout(total=15)
+    timeout = aiohttp.ClientTimeout(total=30)
     semaphore = asyncio.Semaphore(max_concurrency)
     base_params = {
         "tamanhoPagina": PAGE_SIZE.get(tipo, 120),
