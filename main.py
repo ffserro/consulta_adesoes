@@ -1,6 +1,6 @@
-import json
-import base64
 import asyncio
+import base64
+import json
 from datetime import datetime as dt, timedelta as td
 from typing import Dict, List, Optional, Tuple
 
@@ -8,9 +8,9 @@ import aiohttp
 import streamlit as st
 
 API_URL = "https://dadosabertos.compras.gov.br/modulo-arp/2_consultarARPItem"
-MAX_CONCURRENCY = 6
+MAX_CONCURRENCY = 4
 DATE_RANGE_DAYS = 360
-PAGE_SIZE = {"Material": 500, "Serviço": 500}
+PAGE_SIZE = {"Material": 100, "Serviço": 100}
 
 
 st.set_page_config(
@@ -133,10 +133,19 @@ async def fetch_page(
     base_params: Dict[str, str],
 ) -> Dict:
     params = {**base_params, "pagina": page}
+    retries = 10
+    delay = 0.5
     async with semaphore:
-        async with session.get(API_URL, params=params) as response:
-            response.raise_for_status()
-            return await response.json()
+        for attempt in range(retries):
+            try:
+                async with session.get(API_URL, params=params) as response:
+                    response.raise_for_status()
+                    return await response.json()
+            except Exception:
+                if attempt == retries - 1:
+                    raise
+                await asyncio.sleep(delay)
+                delay *= 2
 
 
 async def search_async(
@@ -148,73 +157,76 @@ async def search_async(
     uasg_sphere: Dict[str, str],
     max_concurrency: int = MAX_CONCURRENCY,
 ) -> List[Dict]:
-    """Executa a busca de forma assíncrona, exibindo resultados conforme chegam."""
-    timeout = aiohttp.ClientTimeout(total=180)
+    """Executa a busca no intervalo configurado, retornando resultados conforme chegam."""
+    timeout = aiohttp.ClientTimeout(total=10)
     semaphore = asyncio.Semaphore(max_concurrency)
-    base_params = {
-        "tamanhoPagina": PAGE_SIZE.get(tipo, 120),
-        "dataVigenciaInicialMin": (dt.today() - td(days=DATE_RANGE_DAYS)).strftime("%Y-%m-%d"),
-        "dataVigenciaInicialMax": dt.today().strftime("%Y-%m-%d"),
-    }
-    if tipo == "Material":
-        base_params["codigoPdm"] = codigo
-    else:
-        base_params["codigoItem"] = codigo
-
     connector = aiohttp.TCPConnector(limit=None, ssl=False)
 
+    seen = set()
+    results: List[Dict] = []
+    tasks: List[asyncio.Task] = []
+    total_pages_count = 0
+    processed_pages = 0
+
+    def render_payload(payload: Dict) -> None:
+        for raw in payload.get("resultado", []):
+            uasg_code = extract_uasg(raw)
+            if federal_only:
+                if not uasg_code:
+                    continue
+                if uasg_sphere.get(str(uasg_code)) != "F":
+                    continue
+
+            normalized = normalize_item(raw)
+            if not normalized:
+                continue
+            key = normalized[3]
+            if key in seen:
+                continue
+            seen.add(key)
+            results.append(raw)
+
+            numero, unidade, fornecedor, _, url = normalized
+            results_container.markdown(
+                f"""
+                <div class="result-card">
+                    <div class="status-text">Ata {numero} • {unidade}</div>
+                    <div><a href="{url}" target="_blank">Visualizar documento – {fornecedor}</a></div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
     async with aiohttp.ClientSession(timeout=timeout, connector=connector) as session:
+        end_date = dt.today().date()
+        start_date = end_date - td(days=DATE_RANGE_DAYS - 1)
+        base_params: Dict[str, str] = {
+            "tamanhoPagina": PAGE_SIZE.get(tipo, 120),
+            "dataVigenciaInicialMin": start_date.strftime("%Y-%m-%d"),
+            "dataVigenciaInicialMax": end_date.strftime("%Y-%m-%d"),
+        }
+        if tipo == "Material":
+            base_params["codigoPdm"] = codigo
+        else:
+            base_params["codigoItem"] = codigo
+
         first_page = await fetch_page(session, semaphore, 1, base_params)
-        total_pages = 1 + parse_remaining_pages(first_page.get("paginasRestantes"))
-
-        seen = set()
-        results: List[Dict] = []
-
-        def render_payload(payload: Dict) -> None:
-            for raw in payload.get("resultado", []):
-                uasg_code = extract_uasg(raw)
-                if federal_only:
-                    if not uasg_code:
-                        continue
-                    if uasg_sphere.get(str(uasg_code)) != "F":
-                        continue
-
-                normalized = normalize_item(raw)
-                if not normalized:
-                    continue
-                key = normalized[3]
-                if key in seen:
-                    continue
-                seen.add(key)
-                results.append(raw)
-
-                numero, unidade, fornecedor, _, url = normalized
-                results_container.markdown(
-                    f"""
-                    <div class="result-card">
-                        <div class="status-text">Ata {numero} • {unidade}</div>
-                        <div><a href="{url}" target="_blank">Visualizar documento – {fornecedor}</a></div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-
+        total_pages_count = 1 + parse_remaining_pages(first_page.get("paginasRestantes"))
         render_payload(first_page)
+        processed_pages = 1
 
-        if total_pages == 1:
+        for page in range(2, total_pages_count + 1):
+            tasks.append(asyncio.create_task(fetch_page(session, semaphore, page, base_params)))
+
+        if total_pages_count == processed_pages:
             status_placeholder.success("Busca concluída.")
             return results
 
-        tasks = [
-            asyncio.create_task(fetch_page(session, semaphore, page, base_params))
-            for page in range(2, total_pages + 1)
-        ]
-
-        for index, task in enumerate(asyncio.as_completed(tasks), start=2):
+        for idx, task in enumerate(asyncio.as_completed(tasks), start=processed_pages + 1):
             try:
                 payload = await task
                 render_payload(payload)
-                status_placeholder.info(f"Processando páginas ({index}/{total_pages})…")
+                status_placeholder.info(f"Processando páginas ({idx}/{total_pages_count})…")
             except Exception:
                 status_placeholder.warning(
                     "Falha ao carregar uma das páginas. Retentativa não disponível."
@@ -253,7 +265,8 @@ def run_search(
     if not status_placeholder:
         status_placeholder.info("Nenhum resultado encontrado para este critério.")
 
-with open('acanto.png', 'rb') as f:
+
+with open("acanto.png", "rb") as f:
     acanto = f.read()
 acanto = base64.b64encode(acanto).decode()
 
@@ -261,21 +274,15 @@ acanto = base64.b64encode(acanto).decode()
 def main() -> None:
     st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
-    # st.title("Buscador de Adesões 2.0")
     st.markdown(
-    f"""
-    <div style="
-        display: flex; 
-        align-items: center;
-        gap: 12px;
-    ">
+        f"""
+    <div style="display: flex; align-items: center; gap: 12px;">
         <img src="data:image/png;base64,{acanto}" style="height: 2em;">
         <h1 style="margin: 0;">Buscador de Adesões 2.0</h1>
-        
     </div>
     """,
-    unsafe_allow_html=True
-)
+        unsafe_allow_html=True,
+    )
     st.caption("Consulta inteligente às atas de registro de preços do Compras.gov.br.")
 
     st.write(
