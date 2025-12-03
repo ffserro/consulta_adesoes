@@ -9,6 +9,7 @@ import streamlit as st
 
 API_URL = "https://dadosabertos.compras.gov.br/modulo-arp/2_consultarARPItem"
 MAX_CONCURRENCY = 4
+MAX_CONCURRENCY = 4
 DATE_RANGE_DAYS = 360
 PAGE_SIZE = {"Material": 100, "Serviço": 100}
 
