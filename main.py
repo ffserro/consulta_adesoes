@@ -8,7 +8,7 @@ import aiohttp
 import streamlit as st
 
 API_URL = "https://dadosabertos.compras.gov.br/modulo-arp/2_consultarARPItem"
-MAX_CONCURRENCY = 6
+MAX_CONCURRENCY = 4
 DATE_RANGE_DAYS = 360
 PAGE_SIZE = {"Material": 500, "Serviço": 500}
 
@@ -149,7 +149,7 @@ async def search_async(
     max_concurrency: int = MAX_CONCURRENCY,
 ) -> List[Dict]:
     """Executa a busca de forma assíncrona, exibindo resultados conforme chegam."""
-    timeout = aiohttp.ClientTimeout(total=180)
+    timeout = aiohttp.ClientTimeout(total=15)
     semaphore = asyncio.Semaphore(max_concurrency)
     base_params = {
         "tamanhoPagina": PAGE_SIZE.get(tipo, 120),
